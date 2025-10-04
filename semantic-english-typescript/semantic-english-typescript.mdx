@@ -1,0 +1,650 @@
+---
+title: Semantic English + TypeScript
+description: Exploring how semantically correct English sentences work with TypeScript's type system
+$type: Research
+keywords: [semantic-english, typescript, grammar, schema-org, epcis, natural-language-api]
+---
+
+# Semantic English + TypeScript
+
+**Research Question:** Can we design a TypeScript API that follows semantically correct English grammar, layering Schema.org vocabulary and GS1 EPCIS event context?
+
+## Foundation: 4th Grade English Grammar
+
+### The Basic Sentence
+
+**Elementary school teaches us:**
+
+```
+Subject + Verb + Object = Complete Sentence
+
+Examples:
+- Dog (subject) bites (verb) man (object)
+- Alice (subject) writes (verb) code (object)
+- Business (subject) delivers (verb) service (object)
+```
+
+**In TypeScript:**
+
+```typescript
+// Subject.verb.object() pattern
+dog.bites.man()
+alice.writes.code()
+business.delivers.service()
+```
+
+### Parts of Speech
+
+**From 4th Grade English Class:**
+
+1. **Nouns** (Person, Place, Thing, Idea)
+   - Proper nouns: Alice, Bob, Acme Corp
+   - Common nouns: customer, order, agent
+
+2. **Verbs** (Action Words)
+   - Action verbs: create, assign, deliver
+   - State verbs: is, has, contains
+
+3. **Adjectives** (Describe Nouns)
+   - Modifiers: active, pending, completed
+
+4. **Adverbs** (Describe Verbs)
+   - How: quickly, carefully, automatically
+   - When: daily, hourly, immediately
+   - Where: remotely, locally, globally
+
+5. **Prepositions** (Relationships)
+   - to, from, at, with, by, for
+
+6. **Pronouns** (Replace Nouns)
+   - this, that, it, they
+
+**TypeScript Mapping:**
+
+```typescript
+// Nouns = Types/Interfaces
+type Customer = { ... }
+type Order = { ... }
+type Agent = { ... }
+
+// Verbs = Methods/Functions
+interface Actions {
+  create(thing: Noun): void
+  assign(thing: Noun, to: Noun): void
+  deliver(thing: Noun, to: Noun): void
+}
+
+// Adjectives = Type Modifiers/Filters
+type Active<T> = T & { status: 'active' }
+type Pending<T> = T & { status: 'pending' }
+
+// Adverbs = Method Modifiers/Options
+interface DeliveryOptions {
+  how?: 'quickly' | 'carefully' | 'automatically'
+  when?: Date | 'immediately' | 'daily'
+  where?: Location
+}
+
+// Prepositions = Relationship Operators
+interface Relationships {
+  to(target: Noun): Relation
+  from(source: Noun): Relation
+  at(location: Location): Relation
+  with(companion: Noun): Relation
+}
+```
+
+### The Five W's + How
+
+**Elementary School Journalism:**
+
+- **Who** - The actor/agent
+- **What** - The object/thing
+- **When** - The time
+- **Where** - The location
+- **Why** - The reason/purpose
+- **How** - The method/manner
+
+**These map perfectly to GS1 EPCIS CBV (Core Business Vocabulary)!**
+
+## Layer 1: Schema.org Vocabulary
+
+**Schema.org provides:**
+- **Things** (Nouns): Person, Organization, Product, Service, Event, Place, CreativeWork
+- **Actions** (Verbs): CreateAction, AssignAction, SendAction, ReceiveAction
+
+```typescript
+// Schema.org Thing types as TypeScript interfaces
+interface Thing {
+  '@type': string
+  name: string
+  description?: string
+  identifier?: string
+  url?: string
+}
+
+interface Person extends Thing {
+  '@type': 'Person'
+  givenName?: string
+  familyName?: string
+  email?: string
+}
+
+interface Organization extends Thing {
+  '@type': 'Organization'
+  legalName?: string
+  employees?: Person[]
+}
+
+interface Product extends Thing {
+  '@type': 'Product'
+  price?: number
+  brand?: Organization
+}
+
+interface Service extends Thing {
+  '@type': 'Service'
+  serviceType?: string
+  provider?: Organization
+}
+
+// Schema.org Action types
+interface Action {
+  '@type': string
+  agent: Person | Organization  // Who does it
+  object: Thing                  // What is acted upon
+  startTime?: Date               // When it starts
+  endTime?: Date                 // When it ends
+  location?: Place               // Where it happens
+  instrument?: Thing             // How (tool used)
+  purpose?: string               // Why (reason)
+}
+
+interface CreateAction extends Action {
+  '@type': 'CreateAction'
+  result: Thing  // What was created
+}
+
+interface AssignAction extends Action {
+  '@type': 'AssignAction'
+  recipient: Person  // Who receives the assignment
+}
+
+interface SendAction extends Action {
+  '@type': 'SendAction'
+  recipient: Person | Organization
+}
+```
+
+## Layer 2: GS1 EPCIS CBV
+
+**GS1 EPCIS** (Electronic Product Code Information Services) **Core Business Vocabulary:**
+
+Defines business events with the **5 W's + How**:
+
+```typescript
+// EPCIS Event
+interface EPCISEvent {
+  // What - The object(s) involved
+  epcList: string[]  // Electronic Product Codes
+
+  // When - The time
+  eventTime: Date
+  recordTime: Date
+
+  // Where - The location
+  readPoint?: Location
+  businessLocation?: Location
+
+  // Why - The business reason
+  businessStep: BusinessStep  // e.g., 'shipping', 'receiving', 'storing'
+  disposition: Disposition     // e.g., 'in_transit', 'sold', 'destroyed'
+
+  // How - Additional context
+  bizTransactionList?: BusinessTransaction[]
+  sourceList?: Source[]
+  destinationList?: Destination[]
+
+  // Who (implicit in the system)
+  eventID: string
+}
+
+type BusinessStep =
+  | 'commissioning'
+  | 'shipping'
+  | 'receiving'
+  | 'storing'
+  | 'picking'
+  | 'packing'
+  | 'delivering'
+  | 'retail_selling'
+
+type Disposition =
+  | 'active'
+  | 'in_transit'
+  | 'in_progress'
+  | 'sold'
+  | 'returned'
+  | 'recalled'
+  | 'destroyed'
+```
+
+## Synthesizing: Semantic English TypeScript API
+
+**Combining all three layers:**
+
+```typescript
+// ═══════════════════════════════════════════════════════════
+// Grammar-First TypeScript API
+// ═══════════════════════════════════════════════════════════
+
+// Subject (Who) - The actor
+interface Subject {
+  agent: Agent
+  customer: Customer
+  system: System
+  human: Human
+}
+
+// Verb (What Action) - Schema.org Actions
+interface Verb {
+  creates: CreateProxy
+  assigns: AssignProxy
+  delivers: DeliverProxy
+  receives: ReceiveProxy
+  sends: SendProxy
+  checks: CheckProxy
+}
+
+// Object (What Thing) - Schema.org Things
+interface Object {
+  order: Order
+  deliverable: Deliverable
+  service: Service
+  payment: Payment
+  quality: Quality
+}
+
+// Adverbs/Context (When, Where, How, Why) - EPCIS Context
+interface Context {
+  at(time: Date | string): this
+  in(location: Location): this
+  via(method: string): this
+  because(reason: string): this
+  with(companion: Thing): this
+  for(purpose: string): this
+}
+
+// ═══════════════════════════════════════════════════════════
+// Example: Semantic Sentence API
+// ═══════════════════════════════════════════════════════════
+
+// Simple sentence: Agent creates order
+business.agent.creates.order()
+
+// With context (5 W's + How):
+business.agent('Alice')        // Who
+  .creates.order('#123')       // What
+  .at('2025-10-02T10:00:00Z') // When
+  .in('warehouse-A')           // Where
+  .for('customer-request')     // Why
+  .via('dashboard')            // How
+
+// More examples:
+business.customer('Bob')
+  .receives.deliverable
+  .via('email')
+  .when('order.completed')
+
+business.system
+  .checks.quality
+  .of('deliverable-456')
+  .at('delivery-time')
+  .because('sla-requirement')
+
+business.agent
+  .assigns.work
+  .to('agent-789')
+  .when('capacity-available')
+  .for('load-balancing')
+
+// Passive voice: Order is created by agent
+business.order('#123')
+  .is.created
+  .by('agent-Alice')
+  .at('2025-10-02')
+
+// Compound sentences with conjunctions
+business.agent
+  .creates.order
+  .and.sends.notification
+  .to('customer@example.com')
+
+business.customer
+  .receives.deliverable
+  .but.requests.revision
+  .because('quality-below-threshold')
+
+// Questions (for queries):
+business.agent('Alice').has.capacity.for('new-order')? // Returns boolean
+business.order('#123').is.completed? // Returns boolean
+business.customer.who.ordered('service-789')? // Returns Customer[]
+```
+
+## TypeScript Implementation
+
+### Type-Safe Grammar
+
+```typescript
+// ═══ Subject Types ═══
+type Subject<T> = {
+  // Subject is a Thing
+  [K in keyof T]: VerbProxy<T[K]>
+}
+
+// ═══ Verb Types ═══
+type VerbProxy<TSubject> = {
+  creates: ObjectProxy<TSubject, 'create'>
+  assigns: ObjectProxy<TSubject, 'assign'>
+  delivers: ObjectProxy<TSubject, 'deliver'>
+  receives: ObjectProxy<TSubject, 'receive'>
+  sends: ObjectProxy<TSubject, 'send'>
+  checks: ObjectProxy<TSubject, 'check'>
+  has: PropertyProxy<TSubject>
+  is: StateProxy<TSubject>
+}
+
+// ═══ Object Types ═══
+type ObjectProxy<TSubject, TVerb> = {
+  order: ContextProxy<TSubject, TVerb, Order>
+  deliverable: ContextProxy<TSubject, TVerb, Deliverable>
+  service: ContextProxy<TSubject, TVerb, Service>
+  payment: ContextProxy<TSubject, TVerb, Payment>
+  work: ContextProxy<TSubject, TVerb, Work>
+  quality: ContextProxy<TSubject, TVerb, Quality>
+}
+
+// ═══ Context Types (5 W's + How) ═══
+type ContextProxy<TSubject, TVerb, TObject> = {
+  // Execute immediately
+  (): Promise<Event>
+
+  // Add context
+  at(when: Date | string): ContextProxy<TSubject, TVerb, TObject>
+  in(where: Location): ContextProxy<TSubject, TVerb, TObject>
+  via(how: string): ContextProxy<TSubject, TVerb, TObject>
+  because(why: string): ContextProxy<TSubject, TVerb, TObject>
+  with(what: Thing): ContextProxy<TSubject, TVerb, TObject>
+  for(why: string): ContextProxy<TSubject, TVerb, TObject>
+  to(who: Subject): ContextProxy<TSubject, TVerb, TObject>
+  from(who: Subject): ContextProxy<TSubject, TVerb, TObject>
+  by(who: Subject): ContextProxy<TSubject, TVerb, TObject>
+
+  // Conjunctions
+  and: VerbProxy<TSubject>
+  but: VerbProxy<TSubject>
+  then: VerbProxy<TSubject>
+}
+
+// ═══ Property Proxy (for questions/queries) ═══
+type PropertyProxy<T> = {
+  [K in keyof T]: {
+    for(query: any): boolean | Promise<boolean>
+  }
+}
+
+// ═══ State Proxy (for status/condition) ═══
+type StateProxy<T> = {
+  active: boolean
+  completed: boolean
+  pending: boolean
+  created: ContextProxy<any, 'create', T>
+  assigned: ContextProxy<any, 'assign', T>
+  // ... other states
+}
+```
+
+### Runtime Implementation (Proxy Magic)
+
+```typescript
+class SemanticAPI {
+  constructor(private emitEvent: (event: Event) => void) {}
+
+  // Create subject proxy
+  get agent() {
+    return this.createSubject('agent')
+  }
+
+  get customer() {
+    return this.createSubject('customer')
+  }
+
+  get system() {
+    return this.createSubject('system')
+  }
+
+  private createSubject(subjectType: string) {
+    return new Proxy({}, {
+      get: (target, verb: string) => {
+        return this.createVerb(subjectType, verb)
+      }
+    })
+  }
+
+  private createVerb(subject: string, verb: string) {
+    return new Proxy({}, {
+      get: (target, object: string) => {
+        return this.createObject(subject, verb, object)
+      }
+    })
+  }
+
+  private createObject(subject: string, verb: string, object: string) {
+    const context = {
+      subject,
+      verb,
+      object,
+      when: undefined as Date | string | undefined,
+      where: undefined as string | undefined,
+      how: undefined as string | undefined,
+      why: undefined as string | undefined,
+      who: undefined as string | undefined
+    }
+
+    const execute = () => {
+      // Emit event following EPCIS/Schema.org structure
+      this.emitEvent({
+        '@type': `${verb}Action`,
+        agent: subject,
+        object,
+        startTime: context.when,
+        location: context.where,
+        instrument: context.how,
+        purpose: context.why
+      } as any)
+    }
+
+    const proxy: any = () => execute()
+
+    // Add context methods (5 W's + How)
+    proxy.at = (when: Date | string) => {
+      context.when = when
+      return proxy
+    }
+
+    proxy.in = (where: string) => {
+      context.where = where
+      return proxy
+    }
+
+    proxy.via = (how: string) => {
+      context.how = how
+      return proxy
+    }
+
+    proxy.because = (why: string) => {
+      context.why = why
+      return proxy
+    }
+
+    proxy.for = (purpose: string) => {
+      context.why = purpose
+      return proxy
+    }
+
+    proxy.to = (who: string) => {
+      context.who = who
+      return proxy
+    }
+
+    // Add conjunctions
+    proxy.and = this.createVerb(subject, 'and')
+    proxy.but = this.createVerb(subject, 'but')
+    proxy.then = this.createVerb(subject, 'then')
+
+    return proxy
+  }
+}
+```
+
+## Benefits
+
+### 1. Natural Language Code
+
+Code reads like English sentences:
+
+```typescript
+// Before (technical):
+await createOrder({ customerId: 'Bob', serviceId: 'blog-post', timestamp: new Date() })
+
+// After (semantic):
+customer('Bob').orders.service('blog-post').at(new Date())
+```
+
+### 2. Self-Documenting
+
+Grammar enforces correct usage:
+
+```typescript
+// ✅ Valid sentences
+agent.creates.order
+customer.receives.deliverable
+system.checks.quality
+
+// ❌ Invalid sentences (type error)
+order.creates.agent       // Objects don't create subjects!
+agent.receives.creates    // Verbs don't receive verbs!
+deliverable.at.customer   // Missing verb!
+```
+
+### 3. Layered Semantics
+
+Each layer adds meaning:
+
+```typescript
+// Layer 1: English grammar
+agent.creates.order
+
+// Layer 2: Schema.org vocabulary
+agent  // schema:Person
+  .creates  // schema:CreateAction
+  .order    // schema:Service
+
+// Layer 3: EPCIS context (5 W's + How)
+agent              // Who
+  .creates         // What action
+  .order('#123')   // What object
+  .at('10:00')     // When
+  .in('warehouse') // Where
+  .for('customer') // Why
+  .via('api')      // How
+```
+
+### 4. Query Flexibility
+
+Questions follow grammar:
+
+```typescript
+// Boolean queries
+agent('Alice').has.capacity? // Does Alice have capacity?
+order('#123').is.completed? // Is order completed?
+
+// Search queries
+customer.who.ordered('service-789')? // Which customers ordered this?
+agent.who.is.idle? // Which agents are idle?
+order.what.is['at-risk']? // Which orders are at-risk?
+```
+
+## Integration with Services-as-Software
+
+```typescript
+// Current API (semantic triples):
+business.on.order.created(handler)
+business.forEachCustomer.active(handler)
+
+// Enhanced with grammar:
+business.when.order.is.created(handler)
+business.for.each.customer.who.is.active(handler)
+
+// Or even more natural:
+business.whenever.order.gets.created(handler)
+business.for.all.customers.that.are.active(handler)
+
+// Event description in English:
+business.on.order.created.send.email
+  .to('customer')
+  .with('order-confirmation-template')
+  .because('customer-expects-confirmation')
+
+// Equivalent to:
+business.on.order.created(async (event, ctx) => {
+  await ctx.email.send(
+    event.order.customer.email,
+    'Order Confirmation',
+    renderTemplate('order-confirmation', event.order),
+    { reason: 'customer-expects-confirmation' }
+  )
+})
+```
+
+## Next Steps
+
+1. **Implement Core Grammar Proxies**
+   - Subject, Verb, Object
+   - Type constraints
+   - Runtime execution
+
+2. **Integrate Schema.org Vocabulary**
+   - Import Thing and Action types
+   - Map to TypeScript interfaces
+   - Validate against schema
+
+3. **Add EPCIS Context**
+   - 5 W's + How methods
+   - Event emission
+   - Context tracking
+
+4. **Build Natural Language Queries**
+   - Question patterns
+   - Search syntax
+   - Result filtering
+
+5. **Create Examples**
+   - Business workflows
+   - Event handling
+   - Data queries
+   - Report generation
+
+## References
+
+- **4th Grade English**: Subject-Verb-Object, Parts of Speech, Five W's
+- **Schema.org**: https://schema.org/
+- **GS1 EPCIS**: https://www.gs1.org/standards/epcis
+- **Semantic Web**: RDF triples (Subject-Predicate-Object)
+- **Natural Language Processing**: Grammatical structure
+- **TypeScript**: Advanced type system, Proxies
+
+---
+
+**Status:** Research in progress
+**Next:** Implement proof-of-concept grammar proxy system
